@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Test Notification Settings Sync</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; background-color: #f5f5f5; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Notification Settings Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Test Settings Save</h2>
+        <button onclick="testSaveSettings()">Test Save Settings</button>
+        <div id="saveResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Test Settings Load</h2>
+        <button onclick="testLoadSettings()">Test Load Settings</button>
+        <div id="loadResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Test CSRF Token</h2>
+        <button onclick="testCSRF()">Test CSRF</button>
+        <div id="csrfResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Test PythonAnywhere Deployment</h2>
+        <button onclick="testPythonAnywhere()">Test PythonAnywhere Setup</button>
+        <div id="pythonanywhereResult" class="result"></div>
+    </div>
+
+    <script>
+        // Get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function testSaveSettings() {
+            const testSettings = {
+                notificationEmail: 'test@example.com',
+                phoneNumber: '+1234567890',
+                emailNotifications: true,
+                smsNotifications: true,
+                whatsappNotifications: true,
+                taskStartNotifications: true,
+                taskDueNotifications: true,
+                notificationTiming: '60',
+                dailySummary: true,
+                theme: 'light',
+                compactView: false,
+                showCompleted: true,
+                defaultDuration: '7',
+                autoArchive: false,
+                priorityColors: true,
+                sessionTimeout: '60',
+            };
+
+            fetch('/dashboard/settings/save/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: JSON.stringify(testSettings)
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById('saveResult');
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = '✅ Settings saved successfully!';
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = '❌ Error: ' + (data.error || 'Unknown error');
+                }
+            })
+            .catch(error => {
+                const resultDiv = document.getElementById('saveResult');
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = '❌ Network error: ' + error.message;
+            });
+        }
+
+        function testLoadSettings() {
+            fetch('/dashboard/settings/get/', {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById('loadResult');
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = '✅ Settings loaded successfully!<br>' + 
+                        '<pre>' + JSON.stringify(data.settings, null, 2) + '</pre>';
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = '❌ Error: ' + (data.error || 'Unknown error');
+                }
+            })
+            .catch(error => {
+                const resultDiv = document.getElementById('loadResult');
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = '❌ Network error: ' + error.message;
+            });
+        }
+
+        function testCSRF() {
+            const token = getCookie('csrftoken');
+            const resultDiv = document.getElementById('csrfResult');
+            
+            if (token) {
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = '✅ CSRF token found: ' + token.substring(0, 20) + '...';
+            } else {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = '❌ CSRF token not found. You may need to visit a Django page first.';
+            }
+        }
+
+        function testPythonAnywhere() {
+            const resultDiv = document.getElementById('pythonanywhereResult');
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = '🔍 Testing PythonAnywhere compatibility...';
+            
+            // Test multiple endpoints to verify deployment
+            const tests = [
+                { name: 'Settings API', url: '/dashboard/settings/get/' },
+                { name: 'Static Files', url: '/static/css/style.css' },
+                { name: 'Admin Interface', url: '/admin/' }
+            ];
+            
+            let results = [];
+            let completed = 0;
+            
+            tests.forEach(test => {
+                fetch(test.url, { 
+                    method: 'GET',
+                    headers: { 'X-CSRFToken': getCookie('csrftoken') }
+                })
+                .then(response => {
+                    results.push(`✅ ${test.name}: ${response.status}`);
+                    completed++;
+                    if (completed === tests.length) {
+                        displayPythonAnywhereResults(results);
+                    }
+                })
+                .catch(error => {
+                    results.push(`❌ ${test.name}: Error`);
+                    completed++;
+                    if (completed === tests.length) {
+                        displayPythonAnywhereResults(results);
+                    }
+                });
+            });
+        }
+        
+        function displayPythonAnywhereResults(results) {
+            const resultDiv = document.getElementById('pythonanywhereResult');
+            const allPassed = results.every(r => r.includes('✅'));
+            
+            resultDiv.className = allPassed ? 'result success' : 'result error';
+            resultDiv.innerHTML = `
+                <strong>PythonAnywhere Deployment Test:</strong><br>
+                ${results.join('<br>')}
+                <br><br>
+                <strong>Next Steps:</strong><br>
+                ${allPassed ? 
+                    '🎉 Ready for PythonAnywhere! Set up scheduled task for automatic notifications.' :
+                    '⚠️ Some issues detected. Check deployment configuration.'
+                }
+            `;
+        }
+    </script>
+</body>
+</html>

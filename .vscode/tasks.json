@@ -1,0 +1,13 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Django Server",
+			"type": "shell",
+			"command": "cd \"e:\\todoLIST\\todo-list\\django-todo\" && .\\todo-list-new\\Scripts\\Activate.ps1 && cd ToDoList && python manage.py runserver",
+			"group": "serve",
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}
