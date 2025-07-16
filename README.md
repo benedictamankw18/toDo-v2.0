@@ -356,7 +356,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Documentation**: Check the `docs/` directory
 - **Issues**: Report bugs on GitHub Issues
-- **Email**: support@yourdomain.com
+- **Email**: nethunterghana@gmail.com
 - **Discord**: Join our community server
 
 ## 📈 Roadmap
